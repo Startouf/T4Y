@@ -3,6 +3,8 @@ Bus/dist/*
 Bus/bin/*
 Bus/build/*
 Mobile/lib/*
+Mobile/gen/*
+Mobile/tmp/*
 Mobile/bin/*
 Mobile/dist/*
 Shared/lib/*
