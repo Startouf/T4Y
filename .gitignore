@@ -1,0 +1,10 @@
+Bus/lib/*
+Bus/dist/*
+Bus/bin/*
+Bus/build/*
+Mobile/lib/*
+Mobile/bin/*
+Mobile/dist/*
+Shared/lib/*
+
+Web/lib/*
