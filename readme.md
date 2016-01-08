@@ -31,4 +31,7 @@ You can use the ones in the /res folder. They must be supplied as arguments of t
 
 #### Bluetooth
 
-FFS I don't have any on my Desktop.... that's maybe why the app doesn't want to start
+Alright, running bluetooth on my laptop/Windows 10. 
+
+* Make sure you enable bluetooth on your device
+* If you have some errors "Native library missing", download another version of the bluecove library .jar that contains the native libraries (same version, but the file you'll find on the internet is bigger ^^)
