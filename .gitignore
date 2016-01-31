@@ -4,13 +4,26 @@ Bus/bin/*
 Bus/build/*
 
 Mobile/lib/*
+Mobile/libs/*
 Mobile/gen/*
 Mobile/tmp/*
 Mobile/bin/*
 Mobile/dist/*
+Mobile/build/*
 
 Shared/lib/*
 Shared/dist/*
 Shared/bin/*
 
 Web/lib/*
+
+.idea/*
+Mobile/.idea/*
+Shared/.idea/*
+Web/.settings/*
+
+.gradle/*
+gradle/*
+build/*
+
+*.class
