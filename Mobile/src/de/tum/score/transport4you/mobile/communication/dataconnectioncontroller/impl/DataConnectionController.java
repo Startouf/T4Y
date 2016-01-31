@@ -34,7 +34,7 @@ import de.tum.score.transport4you.shared.mobileweb.impl.message.MobileSettings;
 @TargetApi(Build.VERSION_CODES.FROYO)
 public class DataConnectionController implements IData {
 
-	private static final String baseURL = "http://score-1042.appspot.com/rest/";
+	private static final String baseURL = "https://t4yweb-1186.appspot.com/rest/";
 	private IMainApplication mainApplication;
 	private Context context;
 	
@@ -45,7 +45,6 @@ public class DataConnectionController implements IData {
 	
 	@Override
 	public boolean checkAuthentication(Context context, String username, String password) throws RESTException {
-
 	    try {
 	    	String md5 = computeMD5(password);
 	    	
@@ -55,7 +54,7 @@ public class DataConnectionController implements IData {
 				md5 = "5ebe2294ecd0e0f08eab7690d2a6ee69";
 			}
 			
-	    	String output = new ClientResource(baseURL + "user/" + username + "/" + md5).get().getText();  
+	    	String output = new ClientResource(baseURL + "user/" + username + "/" + md5).get().getText();
 	    	
 	    	if(output.toLowerCase().contains("wrong password"))	{
 	    		return false;	    		
