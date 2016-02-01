@@ -1,0 +1,9 @@
+apply plugin: 'java'
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile files('lib/bcprov-jdk16-145.jar')
+    compile files('lib/javax.persistence_2.0.1.v201006031150.jar')
+    testCompile 'junit:junit:4.12'
+    compile 'junit:junit:4.12'
+}

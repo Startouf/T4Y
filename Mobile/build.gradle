@@ -16,6 +16,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+        }
+    }
+}
+
+repositories {
+    // ...
+    maven { url "https://jitpack.io" }
 }
 
 dependencies {
@@ -24,6 +35,6 @@ dependencies {
     compile 'com.android.support:support-v4:23.1.1'
     compile files('libs/restlet-android-2.3.5/lib/org.restlet.jar')
     compile files('libs/restlet-android-2.3.5/lib/org.restlet.ext.nio.jar')
-    compile 'com.github.kenglxn:QRGen:2.1.0'
+    compile 'com.github.kenglxn.QRGen:android:2.1.0'
     compile 'org.bouncycastle:bcprov-jdk16:1.45'
 }

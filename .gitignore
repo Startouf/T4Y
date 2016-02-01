@@ -10,6 +10,7 @@ Mobile/tmp/*
 Mobile/bin/*
 Mobile/dist/*
 Mobile/build/*
+Mobile/gradle/*
 
 Shared/lib/*
 Shared/dist/*
@@ -27,3 +28,10 @@ gradle/*
 build/*
 
 *.class
+/Mobile.iml
+/T4Y.iml
+/gradlew
+/gradlew.bat
+/import-summary.txt
+/local.properties
+/settings.gradle
