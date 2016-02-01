@@ -2,7 +2,7 @@ package ours.bus.qrcode.scanner;
 
 import ours.bus.qrcode.scanner.impl.Startup;
 
-public class ScannerInterfaceCoordinator {
+public class QRCodeScannerInterfaceCoordinator {
 	
 	/**
 	 * Returns the startup class
