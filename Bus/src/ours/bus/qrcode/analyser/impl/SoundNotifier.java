@@ -10,43 +10,36 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 public class SoundNotifier {
 	
-	private void playAuthorizedSound(){
-		
+	public static void playAuthorizedSound(){
+		URL url = SoundNotifier.class.getClassLoader().getResource("/res/Authorized.mp3");
+		playSound(url);
 	}
 	
-	private void playUnauthorizedSound(){
-		
+	public static void playUnauthorizedSound(){
+		URL url = SoundNotifier.class.getClassLoader().getResource("/res/Not valid.mp3");
+		playSound(url);
 	}
 	
-	private void playSound(URL sound){
-	    Clip clip;
-		try {
-			clip = AudioSystem.getClip();
-			// getAudioInputStream() also accepts a File or InputStream
-			AudioInputStream ais = AudioSystem.
-					getAudioInputStream( sound );
-			clip.open(ais);
-			clip.loop(0);
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					// A GUI element to prevent the Clip's daemon Thread
-					// from terminating at the end of the main()
-					JOptionPane.showMessageDialog(null, "Close to exit!");
-				}
-			});
-		} catch (LineUnavailableException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedAudioFileException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public static void playBugSound(){
+		// TODO !
+		URL url = SoundNotifier.class.getClassLoader().getResource("/res/Not valid.mp3");
+		playSound(url);
+	}
+	
+	public static void playHackerSound(){
+		URL url = SoundNotifier.class.getClassLoader().getResource("/res/res/Forged.mp3");
+		playSound(url);
+	}
+	
+	private static void playSound(URL sound){
+		final Media media = new Media(sound.toString());
+	    final MediaPlayer mediaPlayer = new MediaPlayer(media);
+	    mediaPlayer.play();
 	}
 
 }
