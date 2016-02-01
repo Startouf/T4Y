@@ -6,6 +6,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.PrivateKey;
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,10 +28,17 @@ import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
+import de.tum.score.transport4you.bus.data.datacontroller.DataControllerInterfaceCoordinator;
+import de.tum.score.transport4you.bus.data.datacontroller.error.ConfigurationLoadingException;
 import de.tum.score.transport4you.bus.data.datacontroller.error.DataControllerInitializingException;
 import de.tum.score.transport4you.bus.data.datacontroller.impl.DataController;
+import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeNotBoundToEticketException;
+import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeNotSignedException;
+import de.tum.score.transport4you.shared.mobilebusweb.data.impl.ETicket;
+import de.tum.score.transport4you.shared.mobilebusweb.data.impl.QRCode;
 import ours.bus.qrcode.analyser.IQRCodeAnalyser;
 import ours.bus.qrcode.analyser.QRCodeAnalyserInterfaceCoordinator;
+import ours.bus.qrcode.analyser.impl.QRCodeAnalyser;
 import ours.bus.qrcode.scanner.error.QRCodeScannerInitializingException;
 
 /**
@@ -73,8 +83,9 @@ public class QRCodeScanner extends Thread {
 				if(analyser == null){
 					logger.warn("QR-Code detected but the analyser reference points to null");
 				} else {
-					analyser.analyseQRCode(detectedQRCode);
 					logger.debug("Passing read QR-Code String to analyser");
+					analyser.analyseQRCode(detectedQRCode);
+//					analyser.analyseQRCode(mockGoodQrCode());
 				}
 			} else {
 				// Clear detectedQRCode so we can scan the same one again
@@ -89,6 +100,34 @@ public class QRCodeScanner extends Thread {
 			}
 		}
 		release();
+	}
+	
+	// Mock "Good" QR-Code
+	private String mockGoodQrCode(){
+		ETicket aETicket = new ETicket();
+
+		aETicket.setCustomerId("Arpit");
+		aETicket.setId(123);
+
+		aETicket.setValidUntil(new Date());
+		aETicket.setInvalidatedAt(new Date());
+		
+		QRCode qr = new QRCode();
+		
+		PrivateKey priv = QRCodeAnalyser.pair.getPrivate();
+		
+		qr.setETicket(aETicket);
+		qr.signETicket(priv);
+		
+		
+		String s = null;
+		try {
+			s = qr.serialize();
+		} catch (QRCodeNotBoundToEticketException | QRCodeNotSignedException e) {
+			logger.error(":'(");
+			e.printStackTrace();
+		}
+		return s;
 	}
 	
 	private void release() {
