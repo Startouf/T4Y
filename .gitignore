@@ -13,17 +13,24 @@ Mobile/build/*
 
 Shared/lib/*
 Shared/dist/*
+Shared/build/*
 Shared/bin/*
 
 Web/lib/*
+Web/bin/*
 
 .idea/*
 Mobile/.idea/*
 Shared/.idea/*
 Web/.settings/*
+local.properties
 
 .gradle/*
 gradle/*
 build/*
 
 *.class
+.DS_Store
+/gradlew
+/gradlew.bat
+/import-summary.txt
