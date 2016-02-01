@@ -19,37 +19,27 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.SignedObject;
 
+
 import de.tum.score.transport4you.shared.mobilebus.data.IQRCodeReadeable;
 import de.tum.score.transport4you.shared.mobilebus.data.IQRCodeWriteable;
 import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeNotBoundToEticketException;
 import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeNotDeserializableException;
 import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeNotSignedException;
+import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeSerializationFailedException;
 import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeStringNotSetException;
 
 public class QRCode implements IQRCodeReadeable, IQRCodeWriteable{
 	private ETicket eticket;
-	private SignedObject signature;
-	
-	private String serializedEticket;
-	private String serializedSignature;
-	
-	private String qrCodeString; // = ETicketSerialised + signature
+	private SignedObject signedETicket;
 	
 	@Override
 	public void deserialize(String s) throws QRCodeNotDeserializableException {
-		String [] both = s.split("|||");
-		serializedEticket = both[0];
-		serializedSignature = both[1];
 		try {
-		     byte b[] = serializedEticket.getBytes("ISO-8859-1"); 
+		     byte b[] = s.getBytes("ISO-8859-1"); 
 		     ByteArrayInputStream bi = new ByteArrayInputStream(b);
 		     ObjectInputStream si = new ObjectInputStream(bi);
-		     this.eticket = (ETicket) si.readObject();
-		     
-		     byte b2[] = serializedSignature.getBytes("ISO-8859-1"); 
-		     ByteArrayInputStream bi2 = new ByteArrayInputStream(b2);
-		     ObjectInputStream si2 = new ObjectInputStream(bi2);
-		     this.signature = (SignedObject) si2.readObject();
+		     this.signedETicket = (SignedObject) si.readObject();
+		     this.eticket = (ETicket)signedETicket.getObject();
 		     
 		 } catch (Exception e) {
 		     System.out.println(e);
@@ -64,7 +54,7 @@ public class QRCode implements IQRCodeReadeable, IQRCodeWriteable{
 	@Override
 	public boolean validSignature(PublicKey k) throws QRCodeStringNotSetException {
 		try {
-			return signature.verify(k, Signature.getInstance("RSA","BC"));
+			return signedETicket.verify(k, Signature.getInstance("SHA256WithRSA","BC"));
 		} catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException | NoSuchProviderException e) {
 			e.printStackTrace();
 			return false;
@@ -74,64 +64,33 @@ public class QRCode implements IQRCodeReadeable, IQRCodeWriteable{
 	@Override
 	public void setETicket(ETicket e) {
 		this.eticket = e;
-		try {
-			ByteArrayOutputStream bo = new ByteArrayOutputStream();
-			ObjectOutputStream so = new ObjectOutputStream(bo);
-			so.writeObject(e);
-			so.flush();
-			this.serializedEticket = bo.toString("ISO-8859-1");
-		} catch (Exception exc) {
-			System.out.println(e);
-		}
 	}
 
 	@Override
 	public void signETicket(PrivateKey privateKey) {
 		
 		try {
-			// Sig = RSA (SHA1 hash)
-			signature = new SignedObject(hashTicket(), privateKey, Signature.getInstance("RSA","BC"));
+			// SignedObject = ETicket + Sig = RSA ( HASH ( ETicket ))
+			signedETicket = new SignedObject(this.eticket, privateKey, Signature.getInstance("SHA256WithRSA","BC"));
 			
-			// Serialize signature
-			ByteArrayOutputStream bo = new ByteArrayOutputStream();
-			ObjectOutputStream so = new ObjectOutputStream(bo);
-			so.writeObject(signature);
-			so.flush();
-			this.serializedSignature = bo.toString("ISO-8859-1");
 		} catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException | NoSuchProviderException
 				| IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		// Eticket + signature => we can get our QRCode representation
-		concatenate();
 	}
 	
-	private String hashTicket(){
-		MessageDigest crypt;
-		try {
-			crypt = MessageDigest.getInstance("SHA-1");
-			crypt.reset();
-			crypt.update(this.serializedEticket.getBytes("UTF-8"));
-			
-			return new BigInteger(1, crypt.digest()).toString(16);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-			return null;
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-	
-	private void concatenate(){
-		qrCodeString = serializedEticket+"|||"+this.serializedSignature; 
-		
-	}
-
 	@Override
-	public String serialize() throws QRCodeNotBoundToEticketException, QRCodeNotSignedException {
-		return qrCodeString;
+	public String serialize() throws QRCodeNotBoundToEticketException, QRCodeNotSignedException, QRCodeSerializationFailedException {
+		ByteArrayOutputStream bo = new ByteArrayOutputStream();
+		try {
+			ObjectOutputStream so = new ObjectOutputStream(bo);
+			so.writeObject(signedETicket);
+			so.flush();
+			return bo.toString("ISO-8859-1");
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new QRCodeSerializationFailedException();
+		}
 	}
 }
