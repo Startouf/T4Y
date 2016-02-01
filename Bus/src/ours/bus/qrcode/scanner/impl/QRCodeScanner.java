@@ -27,6 +27,7 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
 import de.tum.score.transport4you.bus.data.datacontroller.error.DataControllerInitializingException;
 import de.tum.score.transport4you.bus.data.datacontroller.impl.DataController;
+import ours.bus.qrcode.analyser.QRCodeAnalyserInterfaceCoordinator;
 import ours.bus.qrcode.scanner.error.QRCodeScannerInitializingException;
 
 /**
@@ -64,7 +65,7 @@ public class QRCodeScanner extends Thread {
 		while(!isInterrupted()){
 			boolean codeSeen = scan();
 			if(codeSeen){
-				// Do something with class ETicket() ?
+				QRCodeAnalyserInterfaceCoordinator.getIQRCodeAnalyser().analyseQRCode(detectedQRCode);
 			}
 			try {
 				// Do not uselessly keep taking photos !
@@ -143,7 +144,7 @@ public class QRCodeScanner extends Thread {
 		} else {
 			//Initialize
 			QRCodeScanner.getInstance().start();
-			logger.debug("Scanner finished");
+			logger.debug("Scanner thread started");
 			this.initialized = true;
 		}
 	}
