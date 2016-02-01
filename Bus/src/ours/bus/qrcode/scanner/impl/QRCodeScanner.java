@@ -27,6 +27,7 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
 import de.tum.score.transport4you.bus.data.datacontroller.error.DataControllerInitializingException;
 import de.tum.score.transport4you.bus.data.datacontroller.impl.DataController;
+import ours.bus.qrcode.analyser.IQRCodeAnalyser;
 import ours.bus.qrcode.analyser.QRCodeAnalyserInterfaceCoordinator;
 import ours.bus.qrcode.scanner.error.QRCodeScannerInitializingException;
 
@@ -52,9 +53,13 @@ public class QRCodeScanner extends Thread {
 	private boolean initialized = false;
 	
 	private Logger logger = Logger.getLogger("QRScanner");
+
+	private IQRCodeAnalyser analyser;
 	
 	public QRCodeScanner(){
+		logger.debug("Starting webcam default");
 		webcam = Webcam.getDefault();
+		analyser = QRCodeAnalyserInterfaceCoordinator.getIQRCodeAnalyser();
 	}
 	
 	@Override
@@ -65,10 +70,19 @@ public class QRCodeScanner extends Thread {
 		while(!isInterrupted()){
 			boolean codeSeen = scan();
 			if(codeSeen){
-				QRCodeAnalyserInterfaceCoordinator.getIQRCodeAnalyser().analyseQRCode(detectedQRCode);
+				if(analyser == null){
+					logger.warn("QR-Code detected but the analyser reference points to null");
+				} else {
+					analyser.analyseQRCode(detectedQRCode);
+					logger.debug("Passing read QR-Code String to analyser");
+				}
+			} else {
+				// Clear detectedQRCode so we can scan the same one again
+				this.detectedQRCode = "NONE";
+				
 			}
 			try {
-				// Do not uselessly keep taking photos !
+				// Do not uselessly keep taking photos ! 1 per second should be enough
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				interrupt();
@@ -115,6 +129,7 @@ public class QRCodeScanner extends Thread {
 						image)));
 		Result qrCodeResult = new MultiFormatReader().decode(binaryBitmap,
 				hintMap);
+		logger.debug("QR-Code detected !");
 		return qrCodeResult.getText();
 	}
 	
@@ -137,7 +152,7 @@ public class QRCodeScanner extends Thread {
 	public void init() throws QRCodeScannerInitializingException {
 		logger.debug("Initializing Data Controller");
 		
-		if(initialized ) {
+		if(initialized) {
 			//Class was already initialized
 			logger.error("Scanner was already initialized");
 			throw new QRCodeScannerInitializingException("Scanner was already initialized");

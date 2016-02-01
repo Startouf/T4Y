@@ -1,4 +1,4 @@
-package ours.bus.qrcode.scanner;
+package ours.bus.qrcode.analyser;
 
 /**
  * Describe interfaces to start this component
@@ -8,7 +8,7 @@ package ours.bus.qrcode.scanner;
 public interface IStartup {
 	
 	/**
-	 * Starts the QRCode scanner component
+	 * Starts the QRCode analyser component
 	 */
 	public void init();
 

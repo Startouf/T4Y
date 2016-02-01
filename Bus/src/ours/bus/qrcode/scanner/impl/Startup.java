@@ -3,6 +3,7 @@ package ours.bus.qrcode.scanner.impl;
 import org.apache.log4j.Logger;
 
 import ours.bus.qrcode.scanner.IStartup;
+import ours.bus.qrcode.scanner.error.QRCodeScannerInitializingException;
 
 public class Startup implements IStartup {
 
@@ -27,8 +28,13 @@ public class Startup implements IStartup {
 	@Override
 	public void init() {
 		logger.debug("Starting the QR-Code Scanner Component");
-		// TODO
-		logger.debug("Data Controller Component started");
+		try {
+			QRCodeScanner.getInstance().init();
+			logger.info("QRCode Scanner thread started");
+		} catch (QRCodeScannerInitializingException e) {
+			logger.error("QRCode Scanner thread failed to start");
+			e.printStackTrace();
+		}
 
 	}
 
