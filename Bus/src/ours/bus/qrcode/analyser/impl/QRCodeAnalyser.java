@@ -86,19 +86,20 @@ public class QRCodeAnalyser extends Thread implements IQRCodeAnalyser {
         	
 			if(validSignature){
 				if(validTicket){
-					SoundNotifier.playAuthorizedSound();
+					BusNotifier.playAuthorizedSound();
 				} else{
-					SoundNotifier.playUnauthorizedSound();
+					BusNotifier.playUnauthorizedSound();
 				}
 			} else{
 				if(validTicket){
-					SoundNotifier.playHackerSound();
+					BusNotifier.playHackerSound();
 				} else {
-					SoundNotifier.playBugSound();
+					BusNotifier.playBugSound();
 				}
 			}
 		} catch (QRCodeNotDeserializableException e) {
 			logger.warn("Could not deserialize QRCode");
+			BusNotifier.playBugSound();
 			e.printStackTrace();
 		} catch (QRCodeStringNotSetException e) {
 			logger.warn("The detected QRCode is not valid");

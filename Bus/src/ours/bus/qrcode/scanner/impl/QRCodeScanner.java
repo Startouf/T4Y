@@ -6,8 +6,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.time.Instant;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +37,7 @@ import de.tum.score.transport4you.bus.data.datacontroller.error.DataControllerIn
 import de.tum.score.transport4you.bus.data.datacontroller.impl.DataController;
 import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeNotBoundToEticketException;
 import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeNotSignedException;
+import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeSerializationFailedException;
 import de.tum.score.transport4you.shared.mobilebusweb.data.impl.ETicket;
 import de.tum.score.transport4you.shared.mobilebusweb.data.impl.QRCode;
 import ours.bus.qrcode.analyser.IQRCodeAnalyser;
@@ -80,12 +84,13 @@ public class QRCodeScanner extends Thread {
 		while(!isInterrupted()){
 			boolean codeSeen = scan();
 			if(codeSeen){
+//			if(true){
 				if(analyser == null){
-					logger.warn("QR-Code detected but the analyser reference points to null");
+					logger.warn("QR-Code detected but the analyser reference is null");
 				} else {
 					logger.debug("Passing read QR-Code String to analyser");
 					analyser.analyseQRCode(detectedQRCode);
-//					analyser.analyseQRCode(mockGoodQrCode());
+//					analyser.analyseQRCode(mockForgedQrCode());
 				}
 			} else {
 				// Clear detectedQRCode so we can scan the same one again
@@ -94,7 +99,7 @@ public class QRCodeScanner extends Thread {
 			}
 			try {
 				// Do not uselessly keep taking photos ! 1 per second should be enough
-				Thread.sleep(1000);
+				Thread.sleep(3000);
 			} catch (InterruptedException e) {
 				interrupt();
 			}
@@ -102,32 +107,63 @@ public class QRCodeScanner extends Thread {
 		release();
 	}
 	
-	// Mock "Good" QR-Code
-	private String mockGoodQrCode(){
+	private ETicket mockETicket(Date validUntil){
 		ETicket aETicket = new ETicket();
 
 		aETicket.setCustomerId("Arpit");
 		aETicket.setId(123);
 
-		aETicket.setValidUntil(new Date());
 		aETicket.setInvalidatedAt(new Date());
 		
+		// Valid till next year
+		aETicket.setValidUntil(validUntil);
+		
+		return aETicket;
+	}
+	
+	private Date nextYear(){
+		Calendar cal = Calendar.getInstance();
+		Date today = cal.getTime();
+		cal.add(Calendar.YEAR, 1); // to get previous year add -1
+		return cal.getTime();
+	}
+	
+	private String mockQrCode(ETicket e, PrivateKey priv){
 		QRCode qr = new QRCode();
 		
-		PrivateKey priv = QRCodeAnalyser.pair.getPrivate();
-		
-		qr.setETicket(aETicket);
+		qr.setETicket(e);
 		qr.signETicket(priv);
-		
 		
 		String s = null;
 		try {
 			s = qr.serialize();
-		} catch (QRCodeNotBoundToEticketException | QRCodeNotSignedException e) {
-			logger.error(":'(");
-			e.printStackTrace();
+		} catch (QRCodeNotBoundToEticketException | QRCodeNotSignedException | QRCodeSerializationFailedException exc) {
+			logger.error(":'( Serialization failed");
+			exc.printStackTrace();
 		}
 		return s;
+	}
+	
+	// Mock "Authorized" QR-Code
+		private String mockAuthorizedQrCode(){
+			ETicket aETicket = mockETicket(nextYear());
+			return mockQrCode(aETicket, QRCodeAnalyser.pair.getPrivate());
+		}
+	
+	private String mockUnvalidQrCode(){
+		return mockQrCode(mockETicket(new Date()), QRCodeAnalyser.pair.getPrivate());
+		
+	}
+	
+	private String mockForgedQrCode(){
+		KeyPairGenerator keyGen = null;
+		try {
+			keyGen = KeyPairGenerator.getInstance("RSA");
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		keyGen.initialize(512);
+		return mockQrCode(mockETicket(nextYear()),keyGen.genKeyPair().getPrivate());
 	}
 	
 	private void release() {
