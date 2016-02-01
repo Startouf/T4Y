@@ -44,7 +44,7 @@ public class ETicketListScreen extends Activity implements IPresentation{
 
 		aETicket.setCustomerId("Arpit");
 		aETicket.setId(123);
-		bETicket.setCustomerId("Ciril");
+		bETicket.setCustomerId("Cyril");
 		bETicket.setId(547);
 		cETicket.setCustomerId("Samit");
 		cETicket.setId(789);
