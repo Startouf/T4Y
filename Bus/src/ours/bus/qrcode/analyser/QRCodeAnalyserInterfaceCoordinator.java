@@ -1,5 +1,6 @@
 package ours.bus.qrcode.analyser;
 
+import ours.bus.qrcode.analyser.impl.QRCodeAnalyser;
 import ours.bus.qrcode.analyser.impl.Startup;
 
 public class QRCodeAnalyserInterfaceCoordinator {
@@ -8,12 +9,11 @@ public class QRCodeAnalyserInterfaceCoordinator {
 	 * @return
 	 */
 	public static IStartup getStartup(){
-		// TODO adapter
-		return null;
+		return Startup.getInstance();
 	}
 
 	public static IQRCodeAnalyser getIQRCodeAnalyser() {
-		return null;
+		return QRCodeAnalyser.getInstance();
 	}
 	
 	// TODO : get the analyser interface to push stuff on stack

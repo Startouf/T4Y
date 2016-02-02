@@ -4,6 +4,7 @@ import java.security.PrivateKey;
 
 import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeNotBoundToEticketException;
 import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeNotSignedException;
+import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeSerializationFailedException;
 import de.tum.score.transport4you.shared.mobilebusweb.data.impl.ETicket;
 
 /**
@@ -35,8 +36,8 @@ public interface IQRCodeWriteable {
 	 * @return String that can be represented as QRCode image
 	 * @throws QRCodeNotBoundToEticketException
 	 * @throws QRCodeNotSignedException
-	 * @throws SignatureMismatchException
+	 * @throws QRCodeSerializationFailedException 
 	 */
-	public String serialize() throws QRCodeNotBoundToEticketException, QRCodeNotSignedException;
+	public String serialize() throws QRCodeNotBoundToEticketException, QRCodeNotSignedException, QRCodeSerializationFailedException;
 
 }
