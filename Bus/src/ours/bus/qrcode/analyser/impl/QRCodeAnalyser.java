@@ -1,23 +1,29 @@
 package ours.bus.qrcode.analyser.impl;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
 import org.bouncycastle.openssl.PEMReader;
 
 import de.tum.score.transport4you.bus.data.datacontroller.DataControllerInterfaceCoordinator;
 import de.tum.score.transport4you.bus.data.datacontroller.error.ConfigurationLoadingException;
 import de.tum.score.transport4you.bus.data.datacontroller.error.DataControllerInitializingException;
+import de.tum.score.transport4you.bus.data.datacontroller.impl.PropertiesConfigurationEntries;
 import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeNotDeserializableException;
 import de.tum.score.transport4you.shared.mobilebus.data.error.QRCodeStringNotSetException;
 import de.tum.score.transport4you.shared.mobilebusweb.data.impl.ETicket;
@@ -38,24 +44,24 @@ public class QRCodeAnalyser extends Thread implements IQRCodeAnalyser {
 	private ETicket ticket;
 	private boolean initialized;
 	
+	private PublicKey pub;
 	
-	public static KeyPair pair;
-	private static PublicKey pub;
-	static{
-		KeyPairGenerator keyGen = null;
+	public void init(File configFile){
+		PropertiesConfiguration propertiesConfiguration;
 		try {
-			keyGen = KeyPairGenerator.getInstance("RSA");
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
+			File publicKeyRes = new File(this.getClass().getClassLoader().getResource("BlobEncryptionKey-cert.pem").toURI());
+			FileReader fr = new FileReader(publicKeyRes);
+			PEMReader r = new PEMReader(fr);
+			X509Certificate cert = (X509Certificate) r.readObject();
+			pub = (PublicKey) cert.getPublicKey();
+			r.close();
+			fr.close();
+		} catch (IOException | URISyntaxException e) {
+			logger.error("Couldn't load public key for QR-Code verification");
 			e.printStackTrace();
 		}
-		keyGen.initialize(512);
-		pair = keyGen.genKeyPair();
-		pub = pair.getPublic();
-	}
-	
-	public QRCodeAnalyser(){
-		//Read Certificate file for encryption
+		this.setName("QR-Code Analyser Thread");
+		this.start();
 	}
 	
 	public void run(){
@@ -86,15 +92,19 @@ public class QRCodeAnalyser extends Thread implements IQRCodeAnalyser {
         	
 			if(validSignature){
 				if(validTicket){
+					logger.info("Ticket signature valid & ETicket valid");
 					BusNotifier.playAuthorizedSound();
 				} else{
+					logger.info("Ticket signature valid but ETicket not valid");
 					BusNotifier.playUnauthorizedSound();
 				}
 			} else{
 				if(validTicket){
+					logger.info("Ticket signature invalid, yet ETicket valid");
 					BusNotifier.playHackerSound();
 				} else {
-					BusNotifier.playBugSound();
+					logger.info("Not a valid signature, the ticket is also not valid");
+					BusNotifier.playHackerSound();
 				}
 			}
 		} catch (QRCodeNotDeserializableException e) {

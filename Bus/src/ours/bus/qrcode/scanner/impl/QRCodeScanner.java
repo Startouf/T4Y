@@ -5,10 +5,15 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
@@ -20,6 +25,7 @@ import javax.imageio.ImageIO;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
+import org.bouncycastle.openssl.PEMReader;
 
 import com.github.sarxos.webcam.Webcam;
 import com.google.zxing.BinaryBitmap;
@@ -57,7 +63,7 @@ public class QRCodeScanner extends Thread {
 	private static QRCodeScanner instance = null;
 	
 	private Webcam webcam;
-	private static Map hintMap = new HashMap();;
+	private static Map hintMap = new HashMap();
 	static{
 		hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
 	}
@@ -69,11 +75,29 @@ public class QRCodeScanner extends Thread {
 	private Logger logger = Logger.getLogger("QRScanner");
 
 	private IQRCodeAnalyser analyser;
+	private PrivateKey priv;
 	
 	public QRCodeScanner(){
 		logger.debug("Starting webcam default");
 		webcam = Webcam.getDefault();
 		analyser = QRCodeAnalyserInterfaceCoordinator.getIQRCodeAnalyser();
+	}
+	
+	public void init() throws QRCodeScannerInitializingException{
+		try {
+			File publicKeyRes = new File(this.getClass().getClassLoader().getResource("BlobEncryptionKey-private.pem").toURI());
+			FileReader fr = new FileReader(publicKeyRes);
+			PEMReader r = new PEMReader(fr);
+			priv = ((KeyPair) r.readObject()).getPrivate();
+			r.close();
+			fr.close();
+		} catch (IOException | URISyntaxException e) {
+			logger.error("Couldn't load public key for QR-Code verification");
+			e.printStackTrace();
+			throw new QRCodeScannerInitializingException("Couldn't read private key");
+		}
+		this.setName("QR-Code Scanner Thread");
+		this.start();
 	}
 	
 	@Override
@@ -90,7 +114,7 @@ public class QRCodeScanner extends Thread {
 				} else {
 					logger.debug("Passing read QR-Code String to analyser");
 					analyser.analyseQRCode(detectedQRCode);
-//					analyser.analyseQRCode(mockForgedQrCode());
+//					mockDetection();
 				}
 			} else {
 				// Clear detectedQRCode so we can scan the same one again
@@ -99,7 +123,7 @@ public class QRCodeScanner extends Thread {
 			}
 			try {
 				// Do not uselessly keep taking photos ! 1 per second should be enough
-				Thread.sleep(3000);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				interrupt();
 			}
@@ -107,6 +131,22 @@ public class QRCodeScanner extends Thread {
 		release();
 	}
 	
+	private void mockDetection() {
+		try {
+			analyser.analyseQRCode(mockAuthorizedQrCode());
+			Thread.sleep(3000);
+			analyser.analyseQRCode(mockUnvalidQrCode());
+			Thread.sleep(3000);
+			analyser.analyseQRCode(mockForgedQrCode());
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
+
 	private ETicket mockETicket(Date validUntil){
 		ETicket aETicket = new ETicket();
 
@@ -147,11 +187,11 @@ public class QRCodeScanner extends Thread {
 	// Mock "Authorized" QR-Code
 		private String mockAuthorizedQrCode(){
 			ETicket aETicket = mockETicket(nextYear());
-			return mockQrCode(aETicket, QRCodeAnalyser.pair.getPrivate());
+			return mockQrCode(aETicket, priv);
 		}
 	
 	private String mockUnvalidQrCode(){
-		return mockQrCode(mockETicket(new Date()), QRCodeAnalyser.pair.getPrivate());
+		return mockQrCode(mockETicket(new Date()), priv);
 		
 	}
 	
@@ -217,25 +257,5 @@ public class QRCodeScanner extends Thread {
 			instance = new QRCodeScanner();
 		}
 		return instance;
-	}
-	
-	/**
-	 * This method needs to be called to initialize the Data Controller correctly.<br>Note that this method must only be called once.
-	 * @param configurationFile
-	 * @throws DataControllerInitializingException 
-	 */
-	public void init() throws QRCodeScannerInitializingException {
-		logger.debug("Initializing Data Controller");
-		
-		if(initialized) {
-			//Class was already initialized
-			logger.error("Scanner was already initialized");
-			throw new QRCodeScannerInitializingException("Scanner was already initialized");
-		} else {
-			//Initialize
-			QRCodeScanner.getInstance().start();
-			logger.debug("Scanner thread started");
-			this.initialized = true;
-		}
 	}
 }

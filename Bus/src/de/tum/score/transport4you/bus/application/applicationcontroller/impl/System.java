@@ -98,7 +98,7 @@ public class System implements ISystem{
 		
 		//Initialize QRCode Analyser component
 		logger.info("Initialize QR-Code Analyser Component");
-		QRCodeAnalyserInterfaceCoordinator.getStartup().init();
+		QRCodeAnalyserInterfaceCoordinator.getStartup().init(configurationFile);
 		logger.info("QR-Code Analyser Component initialized");
 		
 	}

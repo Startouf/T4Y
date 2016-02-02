@@ -1,5 +1,7 @@
 package ours.bus.qrcode.analyser.impl;
 
+import java.io.File;
+
 import org.apache.log4j.Logger;
 
 import ours.bus.qrcode.analyser.IStartup;
@@ -14,8 +16,8 @@ public class Startup implements IStartup {
 	private Logger logger = Logger.getLogger("Application");
 
 	@Override
-	public void init() {
-		QRCodeAnalyser.getInstance().start();
+	public void init(File file) {
+		QRCodeAnalyser.getInstance().init(file);
 	}
 	
 	/**
@@ -26,7 +28,6 @@ public class Startup implements IStartup {
 		if(instance==null){
 			instance = new Startup();
 		}
-		
 		return instance;
 	}
 
